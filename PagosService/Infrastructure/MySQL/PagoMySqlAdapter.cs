@@ -8,10 +8,12 @@ namespace PagosService.Infrastructure.MySQL;
 public class PagoMySqlAdapter : IPagoRepository
 {
     private readonly MyDbContext _context;
+    private readonly IMongoLogger _logger;
 
-    public PagoMySqlAdapter(MyDbContext context)
+    public PagoMySqlAdapter(MyDbContext context, IMongoLogger logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<(bool, int, string)> ProcesarPagoAsync(Pago pago)
@@ -37,8 +39,32 @@ public class PagoMySqlAdapter : IPagoRepository
 
         var result = await _context.SaveChangesAsync();
 
-        return result > 0
-            ? (true, record.IdReserva, record.ReferenciaTransaccion)
-            : (false, 0, string.Empty);
+        if (result > 0)
+        {
+            await _logger.RegistrarLogAsync(
+                "info",
+                "Pago procesado exitosamente",
+                new Dictionary<string, object>
+                {
+                    { "reservaId", record.IdReserva },
+                    { "monto", record.Monto },
+                    { "referencia", record.ReferenciaTransaccion }
+                });
+
+            return (true, record.IdReserva, record.ReferenciaTransaccion);
+        }
+        else
+        {
+            await _logger.RegistrarLogAsync(
+                "error",
+                "Error al procesar el pago",
+                new Dictionary<string, object>
+                {
+                    { "reservaId", pago.IdReserva },
+                    { "monto", pago.Monto }
+                });
+
+            return (false, 0, string.Empty);
+        }
     }
 }
