@@ -6,6 +6,16 @@ using PagosService.Infrastructure.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("PermitirFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost")
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var connectionString = builder.Configuration.GetConnectionString("MySql")!;
 builder.Services.AddDbContext<MyDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -22,6 +32,8 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors("PermitirFrontend");
 
 app.UseAuthorization();
 app.MapControllers();
