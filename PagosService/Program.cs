@@ -21,8 +21,8 @@ builder.Services.AddDbContext<MyDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 builder.Services.Configure<MongoSettings>(
     builder.Configuration.GetSection("MongoSettings"));
-builder.Services.AddSingleton<IMongoLogger, MongoLogger>();
-builder.Services.AddScoped<IPagoRepository, PagoMySqlAdapter>();
+builder.Services.AddScoped<IMongoLogger, MongoLogger>();
+builder.Services.AddScoped<IRepositoryFactory, MySqlRepositoryFactory>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
